@@ -1,0 +1,1135 @@
+openapi: 3.0.3
+info:
+  title: P2P Platform API
+  description: |
+    MVP API for the P2P marketplace (phone auth, client/provider profiles, missions, escrow wallet flow).
+
+    **Authentication:** Obtain a Bearer token via `POST /api/auth/register` or `POST /api/auth/login`, then send `Authorization: Bearer {token}` on protected routes.
+
+    **MVP notes:**
+    - Wallet funding uses sandbox deposit only (no live Mobile Money yet).
+    - Proof fields accept CDN URLs, not multipart uploads.
+    - Payment webhooks return `501` until a gateway is chosen.
+  version: 1.0.0
+  contact:
+    name: P2P API Support
+
+servers:
+  - url: '{baseUrl}'
+    description: Application server
+    variables:
+      baseUrl:
+        default: http://p2p.test
+        description: Set to your APP_URL (e.g. https://p2p.test)
+
+tags:
+  - name: Auth
+    description: Phone + password registration and Sanctum tokens
+  - name: Client
+    description: Client onboarding profile
+  - name: Provider
+    description: Provider onboarding profile
+  - name: Catalog
+    description: Service categories
+  - name: Wallet
+    description: Internal wallet (MVP sandbox funding)
+  - name: Missions
+    description: Mission lifecycle (classic mode MVP)
+  - name: Webhooks
+    description: External payment IPN (not implemented in MVP)
+
+paths:
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      operationId: authRegister
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with phone and password
+      operationId: authLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke all tokens for the current user
+      operationId: authLogout
+      security:
+        - sanctum: []
+      responses:
+        '200':
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Logged out successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/user:
+    get:
+      tags: [Auth]
+      summary: Current authenticated user
+      operationId: authMe
+      security:
+        - sanctum: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/service-categories:
+    get:
+      tags: [Catalog]
+      summary: List service categories
+      operationId: serviceCategoriesIndex
+      security:
+        - sanctum: []
+      responses:
+        '200':
+          description: Category list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ServiceCategory'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/client/profile:
+    post:
+      tags: [Client]
+      summary: Create client profile
+      operationId: clientProfileStore
+      security:
+        - sanctum: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreClientProfileRequest'
+      responses:
+        '201':
+          description: Profile created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Client'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Profile already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    get:
+      tags: [Client]
+      summary: Get client profile
+      operationId: clientProfileShow
+      security:
+        - sanctum: []
+      responses:
+        '200':
+          description: Client profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Client'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/provider/profile:
+    post:
+      tags: [Provider]
+      summary: Create provider profile
+      operationId: providerProfileStore
+      security:
+        - sanctum: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreProviderProfileRequest'
+      responses:
+        '201':
+          description: Profile created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Provider'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Profile already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    get:
+      tags: [Provider]
+      summary: Get provider profile
+      operationId: providerProfileShow
+      security:
+        - sanctum: []
+      responses:
+        '200':
+          description: Provider profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Provider'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/wallet:
+    get:
+      tags: [Wallet]
+      summary: Get wallet balance
+      operationId: walletShow
+      security:
+        - sanctum: []
+      responses:
+        '200':
+          description: Wallet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/wallet/sandbox-deposit:
+    post:
+      tags: [Wallet]
+      summary: Sandbox wallet top-up (MVP only)
+      description: |
+        **Development only.** Credits the authenticated user's wallet without a payment gateway.
+        Must not be exposed in production as-is.
+      operationId: walletSandboxDeposit
+      security:
+        - sanctum: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SandboxDepositRequest'
+      responses:
+        '200':
+          description: Wallet credited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandboxDepositResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/missions:
+    get:
+      tags: [Missions]
+      summary: List missions for the current actor
+      description: |
+        Clients see their missions. Providers see assigned missions plus published missions open for applications.
+      operationId: missionsIndex
+      security:
+        - sanctum: []
+      parameters:
+        - name: lifecycle_status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/LifecycleStatus'
+      responses:
+        '200':
+          description: Paginated mission list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissionCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Missions]
+      summary: Create a mission (client)
+      operationId: missionsStore
+      security:
+        - sanctum: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreMissionRequest'
+      responses:
+        '201':
+          description: Mission created (lifecycle_status published)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Mission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/missions/{mission}:
+    get:
+      tags: [Missions]
+      summary: Get mission details
+      description: pairing_code is returned only to the mission client.
+      operationId: missionsShow
+      security:
+        - sanctum: []
+      parameters:
+        - $ref: '#/components/parameters/MissionId'
+      responses:
+        '200':
+          description: Mission
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Mission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/missions/{mission}/escrow:
+    post:
+      tags: [Missions]
+      summary: Lock escrow from client wallet (client)
+      operationId: missionsLockEscrow
+      security:
+        - sanctum: []
+      parameters:
+        - $ref: '#/components/parameters/MissionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LockEscrowRequest'
+      responses:
+        '201':
+          description: Escrow locked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/EscrowLedger'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/missions/{mission}/applications:
+    post:
+      tags: [Missions]
+      summary: Apply to a published mission (provider)
+      operationId: missionsApply
+      security:
+        - sanctum: []
+      parameters:
+        - $ref: '#/components/parameters/MissionId'
+      responses:
+        '201':
+          description: Application recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MissionApplication'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/missions/{mission}/assign:
+    post:
+      tags: [Missions]
+      summary: Assign provider to mission (client)
+      operationId: missionsAssign
+      security:
+        - sanctum: []
+      parameters:
+        - $ref: '#/components/parameters/MissionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignProviderRequest'
+      responses:
+        '200':
+          description: Provider assigned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Mission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/missions/{mission}/check-in:
+    post:
+      tags: [Missions]
+      summary: GPS check-in with selfie proof (provider)
+      operationId: missionsCheckIn
+      security:
+        - sanctum: []
+      parameters:
+        - $ref: '#/components/parameters/MissionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckInRequest'
+      responses:
+        '200':
+          description: Checked in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Mission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/missions/{mission}/pair:
+    post:
+      tags: [Missions]
+      summary: Pair with client using pairing code (provider)
+      operationId: missionsPair
+      security:
+        - sanctum: []
+      parameters:
+        - $ref: '#/components/parameters/MissionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PairMissionRequest'
+      responses:
+        '200':
+          description: Paired — mission lifecycle_status in_progress
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Mission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/missions/{mission}/complete:
+    post:
+      tags: [Missions]
+      summary: Mark mission completed with after photos (provider)
+      operationId: missionsComplete
+      security:
+        - sanctum: []
+      parameters:
+        - $ref: '#/components/parameters/MissionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteMissionRequest'
+      responses:
+        '200':
+          description: Mission completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Mission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/missions/{mission}/validate:
+    post:
+      tags: [Missions]
+      summary: Client validates completion — releases 70%, starts warranty
+      operationId: missionsValidate
+      security:
+        - sanctum: []
+      parameters:
+        - $ref: '#/components/parameters/MissionId'
+      responses:
+        '200':
+          description: Validated — lifecycle_status under_warranty
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Mission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/missions/{mission}/warranty/close:
+    post:
+      tags: [Missions]
+      summary: Close warranty and release remaining 30% (client)
+      description: Callable after warranty_expires_at has passed.
+      operationId: missionsWarrantyClose
+      security:
+        - sanctum: []
+      parameters:
+        - $ref: '#/components/parameters/MissionId'
+      responses:
+        '200':
+          description: Mission closed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Mission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/webhooks/payments/{gateway}:
+    post:
+      tags: [Webhooks]
+      summary: Mobile Money IPN webhook (not implemented)
+      operationId: paymentWebhook
+      parameters:
+        - name: gateway
+          in: path
+          required: true
+          schema:
+            type: string
+            example: cinetpay
+      requestBody:
+        description: Gateway-specific payload (TBD)
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '501':
+          description: Not implemented in MVP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentWebhookNotImplemented'
+
+components:
+  securitySchemes:
+    sanctum:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
+      description: Token from register/login (Authorization Bearer {token})
+
+  parameters:
+    MissionId:
+      name: mission
+      in: path
+      required: true
+      description: Mission UUID
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Unauthorized:
+      description: Unauthenticated
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MessageResponse'
+    Forbidden:
+      description: Forbidden (e.g. missing client/provider profile or wrong actor)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MessageResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MessageResponse'
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+
+  schemas:
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: The given data was invalid.
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    RegisterRequest:
+      type: object
+      required: [name, phone, password, password_confirmation, device_name, device_fingerprint, national_id_hash]
+      properties:
+        name:
+          type: string
+          maxLength: 60
+          example: Jean Dupont
+        phone:
+          type: string
+          maxLength: 25
+          description: Local or E.164 format; normalized to E.164 on save
+          example: '237670000099'
+        password:
+          type: string
+          minLength: 8
+          format: password
+        password_confirmation:
+          type: string
+          format: password
+        device_name:
+          type: string
+          maxLength: 255
+          example: iphone-15
+        device_fingerprint:
+          type: string
+          maxLength: 255
+        national_id_hash:
+          type: string
+          maxLength: 255
+
+    LoginRequest:
+      type: object
+      required: [phone, password, device_name]
+      properties:
+        phone:
+          type: string
+          example: '237670000010'
+        password:
+          type: string
+          format: password
+        device_name:
+          type: string
+          example: android-14
+
+    AuthTokenResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/User'
+        meta:
+          type: object
+          properties:
+            token:
+              type: string
+              description: Sanctum plain-text token
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        phone:
+          type: string
+          example: '+237670000001'
+        email:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    StoreClientProfileRequest:
+      type: object
+      required: [client_type]
+      properties:
+        client_type:
+          $ref: '#/components/schemas/ClientType'
+
+    ClientType:
+      type: string
+      enum: [individual, business]
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        client_type:
+          $ref: '#/components/schemas/ClientType'
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    StoreProviderProfileRequest:
+      type: object
+      required: [service_category_ids]
+      properties:
+        service_category_ids:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            format: uuid
+
+    Provider:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        current_badge:
+          type: string
+          example: grey
+        srt_score:
+          type: number
+          nullable: true
+        activity_status:
+          type: string
+          example: available
+        service_categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceCategory'
+
+    ServiceCategory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        current_balance:
+          type: number
+          format: float
+
+    WalletResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Wallet'
+
+    SandboxDepositRequest:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: number
+          minimum: 1
+          example: 5000
+
+    SandboxDepositResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Wallet'
+        meta:
+          type: object
+          properties:
+            note:
+              type: string
+              example: Sandbox deposit only — not real Mobile Money.
+
+    StoreMissionRequest:
+      type: object
+      required:
+        - service_category_id
+        - title
+        - intervention_address
+        - estimated_price
+        - execution_mode
+        - scheduled_at
+        - latitude
+        - longitude
+      properties:
+        service_category_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 150
+        description:
+          type: string
+          nullable: true
+        intervention_address:
+          type: string
+        estimated_price:
+          type: number
+          minimum: 0
+        urgency_level:
+          $ref: '#/components/schemas/UrgencyLevel'
+        execution_mode:
+          $ref: '#/components/schemas/ExecutionMode'
+        scheduled_at:
+          type: string
+          format: date-time
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+
+    LockEscrowRequest:
+      type: object
+      required: [payment_reference]
+      properties:
+        payment_reference:
+          type: string
+          maxLength: 100
+          example: sandbox-momo-001
+
+    AssignProviderRequest:
+      type: object
+      required: [provider_id]
+      properties:
+        provider_id:
+          type: string
+          format: uuid
+
+    CheckInRequest:
+      type: object
+      required: [latitude, longitude, selfie_proof_url]
+      properties:
+        latitude:
+          type: number
+        longitude:
+          type: number
+        selfie_proof_url:
+          type: string
+          format: uri
+          maxLength: 512
+
+    PairMissionRequest:
+      type: object
+      required: [pairing_code]
+      properties:
+        pairing_code:
+          type: string
+          maxLength: 25
+
+    CompleteMissionRequest:
+      type: object
+      required: [after_photo_urls]
+      properties:
+        after_photo_urls:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            format: uri
+            maxLength: 512
+
+    UrgencyLevel:
+      type: string
+      enum: [normal, high, critical]
+
+    ExecutionMode:
+      type: string
+      enum: [vip, classic]
+
+    LifecycleStatus:
+      type: string
+      enum:
+        - published
+        - assigned
+        - check_in_in_progress
+        - in_progress
+        - completed
+        - under_warranty
+        - closed
+        - in_dispute
+
+    EscrowStatus:
+      type: string
+      enum:
+        - blocked
+        - seventy_percent_released
+        - thirty_percent_released
+        - refunded
+
+    EscrowLedger:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mission_id:
+          type: string
+          format: uuid
+        total_amount:
+          type: number
+        escrow_status:
+          $ref: '#/components/schemas/EscrowStatus'
+        transaction_reference:
+          type: string
+        locked_at:
+          type: string
+          format: date-time
+          nullable: true
+        released_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    MissionApplication:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mission_id:
+          type: string
+          format: uuid
+        provider_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          example: pending
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    Mission:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        intervention_address:
+          type: string
+        estimated_price:
+          type: number
+        final_price:
+          type: number
+          nullable: true
+        urgency_level:
+          $ref: '#/components/schemas/UrgencyLevel'
+        execution_mode:
+          $ref: '#/components/schemas/ExecutionMode'
+        lifecycle_status:
+          $ref: '#/components/schemas/LifecycleStatus'
+        pairing_code:
+          type: string
+          description: Only visible to the mission client
+        scheduled_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        warranty_expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        client:
+          $ref: '#/components/schemas/Client'
+        provider:
+          $ref: '#/components/schemas/Provider'
+        service_category:
+          $ref: '#/components/schemas/ServiceCategory'
+        escrow_ledger:
+          $ref: '#/components/schemas/EscrowLedger'
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    MissionCollection:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Mission'
+        links:
+          type: object
+        meta:
+          type: object
+
+    PaymentWebhookNotImplemented:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Payment webhook not implemented.

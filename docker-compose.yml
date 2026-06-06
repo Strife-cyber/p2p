@@ -1,0 +1,51 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: p2p
+        restart: unless-stopped
+        working_dir: /var/www/html
+        volumes:
+            - public_files:/var/www/html/public
+            - ./storage:/var/www/html/storage
+            - ./bootstrap/cache:/var/www/html/bootstrap/cache
+            - ./.env:/var/www/html/.env
+        networks:
+            - internal
+            - p2p-local
+        environment:
+            - APP_ENV=production
+            - APP_DEBUG=false
+
+    nginx:
+        image: nginx:alpine
+        container_name: p2p-nginx
+        restart: unless-stopped
+        volumes:
+            - public_files:/var/www/html/public
+            - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+        networks:
+            - traefik-net
+            - p2p-local
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.intellix.rule=Host(`p2p.strife-cyber.org`)"
+            - "traefik.http.routers.intellix.entrypoints=https"
+            - "traefik.http.routers.intellix.tls.certresolver=letsencrypt"
+            - "traefik.http.routers.intellix-router.service=intellix"
+            - "traefik.http.services.intellix.loadbalancer.server.port=80"
+            - "traefik.docker.network=traefik-net"
+        depends_on:
+            - app
+
+networks:
+    traefik-net:
+        external: true
+    internal:
+        external: true
+    p2p-local:
+        driver: bridge
+
+volumes:
+    public_files:

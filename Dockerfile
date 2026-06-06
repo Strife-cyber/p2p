@@ -37,7 +37,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Copy Node files
 COPY package.json package-lock.json ./
-COPY vite.config.ts ./
+COPY vite.config.js ./
 
 # Build Vite assets (Laravel fully available)
 RUN npm ci --legacy-peer-deps && npm run build

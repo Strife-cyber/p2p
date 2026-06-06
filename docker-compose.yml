@@ -30,11 +30,11 @@ services:
             - p2p-local
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.intellix.rule=Host(`p2p.strife-cyber.org`)"
-            - "traefik.http.routers.intellix.entrypoints=https"
-            - "traefik.http.routers.intellix.tls.certresolver=letsencrypt"
-            - "traefik.http.routers.intellix-router.service=intellix"
-            - "traefik.http.services.intellix.loadbalancer.server.port=80"
+            - "traefik.http.routers.p2p.rule=Host(`p2p.strife-cyber.org`)"
+            - "traefik.http.routers.p2p.entrypoints=https"
+            - "traefik.http.routers.p2p.tls.certresolver=letsencrypt"
+            - "traefik.http.routers.p2p-router.service=p2p"
+            - "traefik.http.services.p2p.loadbalancer.server.port=80"
             - "traefik.docker.network=traefik-net"
         depends_on:
             - app

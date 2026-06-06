@@ -7,7 +7,12 @@ FROM php:8.4.8-fpm
 RUN apt-get update && apt-get install -y \
     git curl zip unzip libzip-dev libpng-dev libonig-dev libxml2-dev \
     libpq-dev postgresql-client ca-certificates libssl3 libgomp1 \
-    nodejs npm pkg-config libcurl4-openssl-dev \
+    pkg-config libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 22.x (required by Vite 8, laravel-vite-plugin 3, etc.)
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 # PHP extensions

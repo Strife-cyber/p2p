@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\LifecycleStatus;
 use App\Models\Client;
 use App\Models\Mission;
 use App\Models\Provider;
@@ -9,8 +10,22 @@ use App\Models\User;
 
 class MissionPolicy
 {
-    public function view(User $user, Mission $mission): bool
+    /**
+     * Anyone can view a published (unassigned) mission.
+     * Once assigned, only the client and the assigned provider can view it.
+     */
+    public function view(?User $user, Mission $mission): bool
     {
+        // Published missions are publicly viewable
+        if ($mission->lifecycle_status === LifecycleStatus::Published->value) {
+            return true;
+        }
+
+        // Assigned missions require authentication
+        if ($user === null) {
+            return false;
+        }
+
         return $this->isClient($user, $mission) || $this->isProvider($user, $mission);
     }
 

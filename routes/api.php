@@ -16,6 +16,9 @@ Route::prefix('auth')->group(function (): void {
 
 Route::post('/webhooks/payments/{gateway}', PaymentWebhookController::class);
 
+// Published missions are publicly viewable; assigned ones require auth (enforced by MissionPolicy)
+Route::get('/missions/{mission}', [MissionController::class, 'show']);
+
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/user', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
@@ -33,7 +36,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::get('/missions', [MissionController::class, 'index']);
     Route::post('/missions', [MissionController::class, 'store']);
-    Route::get('/missions/{mission}', [MissionController::class, 'show']);
     Route::post('/missions/{mission}/escrow', [MissionController::class, 'lockEscrow']);
     Route::post('/missions/{mission}/applications', [MissionController::class, 'apply']);
     Route::post('/missions/{mission}/assign', [MissionController::class, 'assign']);
@@ -42,4 +44,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/missions/{mission}/complete', [MissionController::class, 'complete']);
     Route::post('/missions/{mission}/validate', [MissionController::class, 'validateCompletion']);
     Route::post('/missions/{mission}/warranty/close', [MissionController::class, 'closeWarranty']);
+
+    // Provider directory
+    Route::get('/providers/available', [ProviderProfileController::class, 'available']);
 });

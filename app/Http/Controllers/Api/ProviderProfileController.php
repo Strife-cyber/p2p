@@ -51,4 +51,21 @@ class ProviderProfileController extends Controller
             ),
         );
     }
+
+    /**
+     * List all available providers (activity_status = 'available')
+     * with their basic info and service categories.
+     */
+    public function available(): JsonResponse
+    {
+        $providers = Provider::query()
+            ->where('activity_status', ActivityStatus::Available->value)
+            ->with(['serviceCategories', 'securityAccount.user'])
+            ->latest()
+            ->get();
+
+        return ApiResponse::resource(
+            ProviderResource::collection($providers),
+        );
+    }
 }

@@ -17,6 +17,10 @@ class ProviderResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'name' => $this->when(
+                $this->relationLoaded('securityAccount') && $this->securityAccount?->relationLoaded('user'),
+                fn () => $this->securityAccount->user->name,
+            ),
             'current_badge' => $this->current_badge,
             'srt_score' => $this->srt_score,
             'activity_status' => $this->activity_status,

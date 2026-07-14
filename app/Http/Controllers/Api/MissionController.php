@@ -78,7 +78,7 @@ class MissionController extends Controller
 
     public function show(Request $request, Mission $mission): JsonResponse
     {
-        $this->ensureCanAccessMission($request, $mission);
+        $this->authorize('view', $mission);
 
         return ApiResponse::resource(
             new MissionResource(
@@ -177,18 +177,6 @@ class MissionController extends Controller
         );
 
         return ApiResponse::resource(new MissionResource($mission->load('escrowLedger')));
-    }
-
-    private function ensureCanAccessMission(Request $request, Mission $mission): void
-    {
-        $actor = new ActorProfile($request->user());
-
-        $isClient = $actor->clientOrNull()?->id === $mission->client_id;
-        $isProvider = $actor->providerOrNull()?->id === $mission->provider_id;
-
-        if (! $isClient && ! $isProvider) {
-            abort(403, 'You cannot access this mission.');
-        }
     }
 
     private function ensureClientOwnsMission(Request $request, Mission $mission): void

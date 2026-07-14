@@ -91,7 +91,9 @@ class ComprehensiveDatabaseSeeder extends Seeder
             'password' => $password,
         ]);
 
-        SecurityAccount::factory()->for($adminUser)->create([
+        SecurityAccount::create([
+            'user_id'            => $adminUser->id,
+            'real_phone'         => $adminUser->phone,
             'proxy_number'       => PhoneNumber::normalize('+237671000001'),
             'device_fingerprint' => hash('sha256', 'admin-device-001'),
             'national_id_hash'   => hash('sha256', 'admin-nid-001'),
@@ -115,14 +117,16 @@ class ComprehensiveDatabaseSeeder extends Seeder
                 'password' => $password,
             ]);
 
-            $secAccount = SecurityAccount::factory()->for($user)->create([
+            SecurityAccount::create([
+                'user_id'            => $user->id,
+                'real_phone'         => $user->phone,
                 'proxy_number'       => PhoneNumber::normalize('+2376710000'.str_pad((string) $idx, 2, '0', STR_PAD_LEFT)),
                 'device_fingerprint' => hash('sha256', 'client-device-'.$user->id),
                 'national_id_hash'   => hash('sha256', 'client-nid-'.$user->id),
             ]);
 
             $clients[$data['name']] = Client::create([
-                'security_account_id' => $secAccount->user_id,
+                'security_account_id' => $user->id,
                 'client_type'         => $data['type']->value,
             ]);
         }
@@ -149,14 +153,16 @@ class ComprehensiveDatabaseSeeder extends Seeder
                 'password' => $password,
             ]);
 
-            $secAccount = SecurityAccount::factory()->for($user)->create([
+            SecurityAccount::create([
+                'user_id'            => $user->id,
+                'real_phone'         => $user->phone,
                 'proxy_number'       => PhoneNumber::normalize('+2376710000'.str_pad((string) $idx, 2, '0', STR_PAD_LEFT)),
                 'device_fingerprint' => hash('sha256', 'provider-device-'.$user->id),
                 'national_id_hash'   => hash('sha256', 'provider-nid-'.$user->id),
             ]);
 
             $providers[$data['name']] = Provider::create([
-                'security_account_id'            => $secAccount->user_id,
+                'security_account_id'            => $user->id,
                 'current_badge'                  => $data['badge']->value,
                 'badge_modified_at'              => now()->subDays(rand(30, 120)),
                 'badge_expires_at'               => now()->addMonths(rand(3, 12)),
@@ -175,7 +181,9 @@ class ComprehensiveDatabaseSeeder extends Seeder
             'password' => $password,
         ]);
 
-        SecurityAccount::factory()->for($arbitratorUser)->create([
+        SecurityAccount::create([
+            'user_id'            => $arbitratorUser->id,
+            'real_phone'         => $arbitratorUser->phone,
             'proxy_number'       => PhoneNumber::normalize('+23767100010'),
             'device_fingerprint' => hash('sha256', 'arbitrator-device-001'),
             'national_id_hash'   => hash('sha256', 'arbitrator-nid-001'),

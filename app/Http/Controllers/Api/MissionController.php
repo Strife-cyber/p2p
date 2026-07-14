@@ -167,6 +167,16 @@ class MissionController extends Controller
         return ApiResponse::createdResource(new MissionApplicationResource($application));
     }
 
+    public function cancelApplication(Request $request, Mission $mission): JsonResponse
+    {
+        $application = $this->workflow->cancelApplication(
+            $mission,
+            (new ActorProfile($request->user()))->provider(),
+        );
+
+        return ApiResponse::resource(new MissionApplicationResource($application));
+    }
+
     public function assign(AssignProviderRequest $request, Mission $mission): JsonResponse
     {
         $this->ensureClientOwnsMission($request, $mission);

@@ -551,6 +551,35 @@ paths:
         '422':
           $ref: '#/components/responses/ValidationError'
 
+  /api/missions/{mission}/applications/cancel:
+    post:
+      tags: [Missions]
+      summary: Cancel own application (provider)
+      description: Withdraws the provider's pending application from a published mission. Only works while the mission is still published.
+      operationId: missionsCancelApplication
+      security:
+        - sanctum: []
+      parameters:
+        - $ref: '#/components/parameters/MissionId'
+      responses:
+        '200':
+          description: Application cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MissionApplication'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
   /api/missions/{mission}/assign:
     post:
       tags: [Missions]

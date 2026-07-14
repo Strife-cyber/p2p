@@ -69,6 +69,30 @@ class MissionWorkflowService
     }
 
     /**
+     * Provider withdraws their application from a published mission.
+     * Only works while the mission is still published (not yet assigned).
+     */
+    public function cancelApplication(Mission $mission, Provider $provider): MissionApplication
+    {
+        $this->assertStatus($mission, LifecycleStatus::Published);
+
+        $application = MissionApplication::query()
+            ->where('mission_id', $mission->id)
+            ->where('provider_id', $provider->id)
+            ->firstOrFail();
+
+        if ($application->status !== 'pending') {
+            throw ValidationException::withMessages([
+                'application' => ['This application has already been processed and cannot be cancelled.'],
+            ]);
+        }
+
+        $application->update(['status' => 'cancelled']);
+
+        return $application->fresh();
+    }
+
+    /**
      * Client assigns a provider (classic: from applicants; VIP: direct pick).
      *
      * TODO(decision): VIP auto-matching by proximity/SRT — MVP requires client

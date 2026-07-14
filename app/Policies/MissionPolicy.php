@@ -17,7 +17,7 @@ class MissionPolicy
     public function view(?User $user, Mission $mission): bool
     {
         // Published missions are publicly viewable
-        if ($mission->lifecycle_status === LifecycleStatus::Published->value) {
+        if ($mission->lifecycle_status === LifecycleStatus::Published) {
             return true;
         }
 
@@ -72,7 +72,7 @@ class MissionPolicy
     private function isClient(User $user, Mission $mission): bool
     {
         return Client::query()
-            ->where('id', $user->id)
+            ->where('security_account_id', $user->id)
             ->whereKey($mission->client_id)
             ->exists();
     }

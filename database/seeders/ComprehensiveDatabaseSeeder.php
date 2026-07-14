@@ -712,7 +712,7 @@ class ComprehensiveDatabaseSeeder extends Seeder
         foreach ($transactions as $tx) {
             FinancialTransaction::create([
                 'wallet_id'          => $tx[0],
-                'amount'             => $tx[2],
+                'amount'             => $tx[1],
                 'transaction_type'   => $tx[2]->value,
                 'external_reference' => $tx[3],
                 'created_at'         => $now->copy()->subDays(rand(1, 30)),

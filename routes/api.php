@@ -35,6 +35,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/wallet/sandbox-deposit', [WalletController::class, 'sandboxDeposit']);
 
     Route::get('/missions', [MissionController::class, 'index']);
+    Route::get('/client/missions', [MissionController::class, 'clientMissions']);
+    Route::get('/provider/missions', [MissionController::class, 'providerMissions']);
     Route::post('/missions', [MissionController::class, 'store']);
     Route::post('/missions/{mission}/escrow', [MissionController::class, 'lockEscrow']);
     Route::get('/missions/{mission}/applications', [MissionController::class, 'applications']);

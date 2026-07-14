@@ -327,6 +327,60 @@ paths:
         '422':
           $ref: '#/components/responses/ValidationError'
 
+  /api/client/missions:
+    get:
+      tags: [Client]
+      summary: List client's own missions (all statuses)
+      description: Returns all missions belonging to the authenticated client, optionally filtered by lifecycle_status.
+      operationId: clientMissionsIndex
+      security:
+        - sanctum: []
+      parameters:
+        - name: lifecycle_status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/LifecycleStatus'
+      responses:
+        '200':
+          description: Paginated mission list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissionCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/provider/missions:
+    get:
+      tags: [Provider]
+      summary: List missions related to the provider
+      description: |
+        Returns missions the provider is assigned to or has applied to,
+        optionally filtered by lifecycle_status.
+      operationId: providerMissionsIndex
+      security:
+        - sanctum: []
+      parameters:
+        - name: lifecycle_status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/LifecycleStatus'
+      responses:
+        '200':
+          description: Paginated mission list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissionCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
   /api/missions:
     get:
       tags: [Missions]

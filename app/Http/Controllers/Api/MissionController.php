@@ -16,6 +16,7 @@ use App\Http\Resources\MissionApplicationResource;
 use App\Http\Resources\MissionResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Mission;
+use App\Models\MissionApplication;
 use App\Models\Provider;
 use App\Services\EscrowService;
 use App\Services\MissionWorkflowService;
@@ -48,6 +49,52 @@ class MissionController extends Controller
 
         return MissionResource::collection(
             $query->latest()->paginate(20)
+        );
+    }
+
+    /**
+     * List all missions for the authenticated client (any status).
+     */
+    public function clientMissions(Request $request): AnonymousResourceCollection
+    {
+        $client = (new ActorProfile($request->user()))->client();
+
+        return MissionResource::collection(
+            Mission::query()
+                ->with(['serviceCategory', 'provider', 'escrowLedger'])
+                ->where('client_id', $client->id)
+                ->when($request->filled('lifecycle_status'), fn ($q) =>
+                    $q->where('lifecycle_status', $request->string('lifecycle_status'))
+                )
+                ->latest()
+                ->paginate(20),
+        );
+    }
+
+    /**
+     * List all missions related to the authenticated provider:
+     * missions they are assigned to OR have applied to.
+     */
+    public function providerMissions(Request $request): AnonymousResourceCollection
+    {
+        $provider = (new ActorProfile($request->user()))->provider();
+
+        $missionIdsApplied = MissionApplication::query()
+            ->where('provider_id', $provider->id)
+            ->pluck('mission_id');
+
+        return MissionResource::collection(
+            Mission::query()
+                ->with(['serviceCategory', 'client', 'escrowLedger'])
+                ->where(fn ($q) => $q
+                    ->where('provider_id', $provider->id)
+                    ->orWhereIn('id', $missionIdsApplied)
+                )
+                ->when($request->filled('lifecycle_status'), fn ($q) =>
+                    $q->where('lifecycle_status', $request->string('lifecycle_status'))
+                )
+                ->latest()
+                ->paginate(20),
         );
     }
 

@@ -34,7 +34,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::get('/missions', [MissionController::class, 'index']);
     Route::get('/client/missions', [MissionController::class, 'clientMissions']);
+    Route::get('/client/missions/history', [MissionController::class, 'clientHistory']);
     Route::get('/provider/missions', [MissionController::class, 'providerMissions']);
+    Route::get('/provider/missions/history', [MissionController::class, 'providerHistory']);
     Route::post('/missions', [MissionController::class, 'store']);
     Route::post('/missions/{mission}/escrow', [MissionController::class, 'lockEscrow']);
     Route::get('/missions/{mission}/applications', [MissionController::class, 'applications']);

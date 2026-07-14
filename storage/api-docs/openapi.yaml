@@ -353,6 +353,26 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
+  /api/client/missions/history:
+    get:
+      tags: [Client]
+      summary: Client's mission history
+      description: Returns the client's completed, under_warranty, and closed missions.
+      operationId: clientMissionsHistory
+      security:
+        - sanctum: []
+      responses:
+        '200':
+          description: Paginated mission list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissionCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
   /api/provider/missions:
     get:
       tags: [Provider]
@@ -369,6 +389,26 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/LifecycleStatus'
+      responses:
+        '200':
+          description: Paginated mission list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissionCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/provider/missions/history:
+    get:
+      tags: [Provider]
+      summary: Provider's mission history
+      description: Returns the provider's completed, under_warranty, and closed missions.
+      operationId: providerMissionsHistory
+      security:
+        - sanctum: []
       responses:
         '200':
           description: Paginated mission list

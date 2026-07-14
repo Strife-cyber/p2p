@@ -62,4 +62,16 @@ return [
     */
     'withdrawal_srt_penalty' => (float) env('P2P_WITHDRAWAL_SRT_PENALTY', 5.0),
 
+    /*
+    |--------------------------------------------------------------------------
+    | SRT bonus for successful mission completion
+    |--------------------------------------------------------------------------
+    |
+    | When a provider completes a mission and the client validates it, their
+    | SRT score increases by this amount and missions_without_dispute_count
+    | increments by 1.
+    |
+    */
+    'completion_srt_bonus' => (float) env('P2P_COMPLETION_SRT_BONUS', 2.0),
+
 ];

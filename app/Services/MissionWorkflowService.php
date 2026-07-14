@@ -300,12 +300,16 @@ class MissionWorkflowService
             $this->escrow->releaseSeventyPercent($mission, $mission->provider);
 
             $warrantyHours = (int) config('p2p.warranty_hours');
+            $srtBonus = (float) config('p2p.completion_srt_bonus');
 
             $mission->update([
                 'lifecycle_status' => LifecycleStatus::UnderWarranty,
                 'warranty_expires_at' => now()->addHours($warrantyHours),
             ]);
 
+            // Reward provider for successful completion
+            $mission->provider->increment('srt_score', $srtBonus);
+            $mission->provider->increment('missions_without_dispute_count');
             $mission->provider->update(['activity_status' => ActivityStatus::Available]);
 
             return $mission->fresh(['escrowLedger', 'provider']);

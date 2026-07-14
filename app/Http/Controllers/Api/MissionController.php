@@ -97,6 +97,48 @@ class MissionController extends Controller
         );
     }
 
+    /**
+     * History of the client's completed missions (completed, under_warranty, closed).
+     */
+    public function clientHistory(Request $request): AnonymousResourceCollection
+    {
+        $client = (new ActorProfile($request->user()))->client();
+
+        return MissionResource::collection(
+            Mission::query()
+                ->with(['serviceCategory', 'provider', 'escrowLedger'])
+                ->where('client_id', $client->id)
+                ->whereIn('lifecycle_status', [
+                    LifecycleStatus::Completed->value,
+                    LifecycleStatus::UnderWarranty->value,
+                    LifecycleStatus::Closed->value,
+                ])
+                ->latest()
+                ->paginate(20),
+        );
+    }
+
+    /**
+     * History of the provider's completed missions (completed, under_warranty, closed).
+     */
+    public function providerHistory(Request $request): AnonymousResourceCollection
+    {
+        $provider = (new ActorProfile($request->user()))->provider();
+
+        return MissionResource::collection(
+            Mission::query()
+                ->with(['serviceCategory', 'client', 'escrowLedger'])
+                ->where('provider_id', $provider->id)
+                ->whereIn('lifecycle_status', [
+                    LifecycleStatus::Completed->value,
+                    LifecycleStatus::UnderWarranty->value,
+                    LifecycleStatus::Closed->value,
+                ])
+                ->latest()
+                ->paginate(20),
+        );
+    }
+
     public function store(StoreMissionRequest $request): JsonResponse
     {
         $client = (new ActorProfile($request->user()))->client();

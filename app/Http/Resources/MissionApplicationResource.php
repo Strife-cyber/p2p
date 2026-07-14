@@ -20,6 +20,7 @@ class MissionApplicationResource extends JsonResource
             'mission_id' => $this->mission_id,
             'provider_id' => $this->provider_id,
             'status' => $this->status,
+            'provider' => new ProviderResource($this->whenLoaded('provider')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

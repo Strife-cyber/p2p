@@ -445,6 +445,31 @@ paths:
           $ref: '#/components/responses/ValidationError'
 
   /api/missions/{mission}/applications:
+    get:
+      tags: [Missions]
+      summary: List applicants for a mission (client only)
+      description: Returns all provider applications with provider info (name, badge, SRT score, categories). Only the mission client can view this.
+      operationId: missionsApplications
+      security:
+        - sanctum: []
+      parameters:
+        - $ref: '#/components/parameters/MissionId'
+      responses:
+        '200':
+          description: Application list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MissionApplication'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       tags: [Missions]
       summary: Apply to a published mission (provider)
@@ -1085,6 +1110,8 @@ components:
         status:
           type: string
           example: pending
+        provider:
+          $ref: '#/components/schemas/Provider'
         created_at:
           type: string
           format: date-time

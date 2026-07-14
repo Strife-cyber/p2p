@@ -44,6 +44,14 @@ class MissionPolicy
         return Provider::query()->where('security_account_id', $user->id)->exists();
     }
 
+    public function viewApplications(User $user, Mission $mission): bool
+    {
+        return Client::query()
+            ->where('security_account_id', $user->id)
+            ->whereKey($mission->client_id)
+            ->exists();
+    }
+
     public function checkIn(User $user, Mission $mission): bool
     {
         return $this->isProvider($user, $mission);

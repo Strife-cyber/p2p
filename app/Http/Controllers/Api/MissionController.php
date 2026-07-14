@@ -98,6 +98,18 @@ class MissionController extends Controller
         return ApiResponse::createdResource(new EscrowLedgerResource($ledger));
     }
 
+    public function applications(Request $request, Mission $mission): AnonymousResourceCollection
+    {
+        $this->authorize('viewApplications', $mission);
+
+        return MissionApplicationResource::collection(
+            $mission->applications()
+                ->with(['provider.securityAccount.user', 'provider.serviceCategories'])
+                ->latest()
+                ->get(),
+        );
+    }
+
     public function apply(Request $request, Mission $mission): JsonResponse
     {
         $application = $this->workflow->apply(

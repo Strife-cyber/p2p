@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/missions/{mission}/applications', [MissionController::class, 'apply']);
     Route::post('/missions/{mission}/applications/cancel', [MissionController::class, 'cancelApplication']);
     Route::post('/missions/{mission}/assign', [MissionController::class, 'assign']);
+    Route::post('/missions/{mission}/withdraw', [MissionController::class, 'withdraw']);
     Route::post('/missions/{mission}/check-in', [MissionController::class, 'checkIn']);
     Route::post('/missions/{mission}/pair', [MissionController::class, 'pair']);
     Route::post('/missions/{mission}/complete', [MissionController::class, 'complete']);

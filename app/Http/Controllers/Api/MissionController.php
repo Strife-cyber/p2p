@@ -188,6 +188,16 @@ class MissionController extends Controller
         return ApiResponse::resource(new MissionResource($mission));
     }
 
+    public function withdraw(Request $request, Mission $mission): JsonResponse
+    {
+        $mission = $this->workflow->withdraw(
+            $mission,
+            (new ActorProfile($request->user()))->provider(),
+        );
+
+        return ApiResponse::resource(new MissionResource($mission));
+    }
+
     public function checkIn(CheckInRequest $request, Mission $mission): JsonResponse
     {
         $mission = $this->workflow->checkIn(

@@ -612,6 +612,38 @@ paths:
         '422':
           $ref: '#/components/responses/ValidationError'
 
+  /api/missions/{mission}/withdraw:
+    post:
+      tags: [Missions]
+      summary: Withdraw from assigned mission (provider)
+      description: |
+        Provider voluntarily withdraws from an assigned mission.
+        Penalises their SRT score by `withdrawal_srt_penalty` (default 5 pts)
+        and resets `missions_without_dispute_count` to 0.
+        The mission returns to `published` status.
+        A resolved shunting dispute is recorded for audit.
+      operationId: missionsWithdraw
+      security:
+        - sanctum: []
+      parameters:
+        - $ref: '#/components/parameters/MissionId'
+      responses:
+        '200':
+          description: Mission returned to published
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Mission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
   /api/missions/{mission}/check-in:
     post:
       tags: [Missions]

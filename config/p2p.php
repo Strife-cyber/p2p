@@ -50,4 +50,16 @@ return [
     */
     'payment_gateway' => env('P2P_PAYMENT_GATEWAY', 'sandbox'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Provider withdrawal penalty (SRT points deducted)
+    |--------------------------------------------------------------------------
+    |
+    | When a provider withdraws from an assigned mission, their SRT score
+    | is reduced by this amount and their missions_without_dispute_count
+    | resets to zero.
+    |
+    */
+    'withdrawal_srt_penalty' => (float) env('P2P_WITHDRAWAL_SRT_PENALTY', 5.0),
+
 ];

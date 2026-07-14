@@ -3,9 +3,12 @@
 namespace App\Services;
 
 use App\Enums\ActivityStatus;
+use App\Enums\AnomalyType;
+use App\Enums\DisputeStatus;
 use App\Enums\ExecutionMode;
 use App\Enums\LifecycleStatus;
 use App\Models\Client;
+use App\Models\Dispute;
 use App\Models\Mission;
 use App\Models\MissionApplication;
 use App\Models\MissionFieldVerification;
@@ -139,6 +142,45 @@ class MissionWorkflowService
             ->update(['status' => 'accepted']);
 
         return $mission->fresh(['provider', 'client', 'escrowLedger']);
+    }
+
+    /**
+     * Provider withdraws from an assigned mission (before check-in).
+     * Penalises SRT score and resets the mission to published.
+     */
+    public function withdraw(Mission $mission, Provider $provider): Mission
+    {
+        $this->assertStatus($mission, LifecycleStatus::Assigned);
+        $this->assertAssignedProvider($mission, $provider);
+
+        $penalty = (float) config('p2p.withdrawal_srt_penalty', 5.0);
+
+        return DB::transaction(function () use ($mission, $provider, $penalty): Mission {
+            // Penalise provider reputation
+            $provider->decrement('srt_score', $penalty);
+            $provider->update(['missions_without_dispute_count' => 0]);
+
+            // Record the withdrawal as a resolved shunting dispute
+            Dispute::query()->create([
+                'mission_id'      => $mission->id,
+                'anomaly_type'    => AnomalyType::Shunting->value,
+                'dispute_status'  => DisputeStatus::Resolved->value,
+                'arbitrator_id'   => null,
+                'decision_notes'  => 'Provider voluntarily withdrew from the assigned mission.',
+                'srt_penalty'     => $penalty,
+                'triggered_at'    => now(),
+            ]);
+
+            // Free the mission back to published
+            $mission->update([
+                'provider_id'      => null,
+                'lifecycle_status' => LifecycleStatus::Published,
+            ]);
+
+            $provider->update(['activity_status' => ActivityStatus::Available]);
+
+            return $mission->fresh(['client', 'escrowLedger']);
+        });
     }
 
     public function checkIn(

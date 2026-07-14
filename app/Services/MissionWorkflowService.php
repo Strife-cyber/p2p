@@ -96,6 +96,13 @@ class MissionWorkflowService
             }
         }
 
+        // A provider cannot be assigned to more than one active mission at a time
+        if ($this->providerHasActiveMission($provider)) {
+            throw ValidationException::withMessages([
+                'provider_id' => ['This provider already has an active (assigned or in-progress) mission.'],
+            ]);
+        }
+
         $mission->update([
             'provider_id' => $provider->id,
             'lifecycle_status' => LifecycleStatus::Assigned,
@@ -287,5 +294,20 @@ class MissionWorkflowService
                 'mission' => ['You are not assigned to this mission.'],
             ]);
         }
+    }
+
+    /**
+     * Check whether the provider already has an active (assigned or in-progress) mission,
+     * which would violate the partial unique index uq_active_mission_provider.
+     */
+    private function providerHasActiveMission(Provider $provider): bool
+    {
+        return Mission::query()
+            ->where('provider_id', $provider->id)
+            ->whereIn('lifecycle_status', [
+                LifecycleStatus::Assigned->value,
+                LifecycleStatus::InProgress->value,
+            ])
+            ->exists();
     }
 }

@@ -72,7 +72,7 @@ class MissionPolicy
     private function isClient(User $user, Mission $mission): bool
     {
         return Client::query()
-            ->where('security_account_id', $user->id)
+            ->where('id', $user->id)
             ->whereKey($mission->client_id)
             ->exists();
     }

@@ -17,7 +17,7 @@ class LockEscrowRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_reference' => ['required', 'string', 'max:100'],
+            'payment_reference' => ['sometimes', 'string', 'max:100'],
         ];
     }
 }

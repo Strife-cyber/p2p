@@ -12,6 +12,7 @@ use App\Models\Mission;
 use App\Models\Provider;
 use App\Models\Wallet;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class EscrowService
@@ -19,10 +20,10 @@ class EscrowService
     /**
      * Lock client funds for a published mission (MVP: internal wallet debit only).
      *
-     * TODO(decision): Require confirmed Mobile Money IPN before locking?
-     * Current MVP trusts the client wallet balance already funded.
+     * Auto-generates a transaction reference if none provided — one-click lock.
+     * Only asks the client to fund their wallet if the balance is insufficient.
      */
-    public function lockForMission(Mission $mission, Client $client, string $paymentReference): EscrowLedger
+    public function lockForMission(Mission $mission, Client $client, ?string $paymentReference = null): EscrowLedger
     {
         if ($mission->lifecycle_status !== LifecycleStatus::Published) {
             throw ValidationException::withMessages([
@@ -36,7 +37,9 @@ class EscrowService
             ]);
         }
 
-        return DB::transaction(function () use ($mission, $client, $paymentReference): EscrowLedger {
+        $reference = $paymentReference ?? 'ESC-' . strtoupper(Str::random(12));
+
+        return DB::transaction(function () use ($mission, $client, $reference): EscrowLedger {
             $wallet = $this->walletForUser($client->security_account_id);
             $amount = (float) $mission->estimated_price;
 
@@ -52,7 +55,7 @@ class EscrowService
                 'wallet_id' => $wallet->id,
                 'amount' => -$amount,
                 'transaction_type' => TransactionType::MissionPayment,
-                'external_reference' => $paymentReference,
+                'external_reference' => $reference,
                 'created_at' => now(),
             ]);
 
@@ -60,7 +63,7 @@ class EscrowService
                 'mission_id' => $mission->id,
                 'total_amount' => $amount,
                 'escrow_status' => EscrowStatus::Blocked,
-                'transaction_reference' => $paymentReference,
+                'transaction_reference' => $reference,
                 'locked_at' => now(),
             ]);
         });

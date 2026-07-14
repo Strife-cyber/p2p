@@ -92,7 +92,7 @@ class MissionController extends Controller
         $ledger = $this->escrow->lockForMission(
             $mission,
             $client,
-            $request->string('payment_reference')->toString(),
+            $request->has('payment_reference') ? $request->string('payment_reference')->toString() : null,
         );
 
         return ApiResponse::createdResource(new EscrowLedgerResource($ledger));

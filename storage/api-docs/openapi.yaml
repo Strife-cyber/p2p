@@ -970,11 +970,11 @@ components:
 
     LockEscrowRequest:
       type: object
-      required: [payment_reference]
       properties:
         payment_reference:
           type: string
           maxLength: 100
+          description: Optional. Auto-generated if omitted — one-click lock from wallet balance.
           example: sandbox-momo-001
 
     AssignProviderRequest:

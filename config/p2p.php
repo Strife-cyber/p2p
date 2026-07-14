@@ -60,7 +60,7 @@ return [
     | resets to zero.
     |
     */
-    'withdrawal_srt_penalty' => (float) env('P2P_WITHDRAWAL_SRT_PENALTY', 5.0),
+    'withdrawal_srt_penalty' => (float) env('P2P_WITHDRAWAL_SRT_PENALTY', 3.5),
 
     /*
     |--------------------------------------------------------------------------

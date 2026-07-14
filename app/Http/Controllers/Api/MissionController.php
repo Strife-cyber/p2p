@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\LifecycleStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Http\Requests\Mission\AssignProviderRequest;
@@ -30,24 +31,18 @@ class MissionController extends Controller
         private EscrowService $escrow,
     ) {}
 
+    /**
+     * List only published (unassigned) missions — the public marketplace view.
+     * For role-specific mission lists, use dedicated endpoints.
+     */
     public function index(Request $request): AnonymousResourceCollection
     {
-        $actor = new ActorProfile($request->user());
-        $query = Mission::query()->with(['serviceCategory', 'client', 'provider', 'escrowLedger']);
+        $query = Mission::query()
+            ->with(['serviceCategory', 'client', 'provider', 'escrowLedger'])
+            ->where('lifecycle_status', LifecycleStatus::Published->value);
 
-        if ($client = $actor->clientOrNull()) {
-            $query->where('client_id', $client->id);
-        } elseif ($provider = $actor->providerOrNull()) {
-            $query->where(function ($builder) use ($provider): void {
-                $builder->where('provider_id', $provider->id)
-                    ->orWhere('lifecycle_status', 'published');
-            });
-        } else {
-            return MissionResource::collection(collect());
-        }
-
-        if ($request->filled('lifecycle_status')) {
-            $query->where('lifecycle_status', $request->string('lifecycle_status')->toString());
+        if ($request->filled('service_category_id')) {
+            $query->where('service_category_id', $request->string('service_category_id')->toString());
         }
 
         return MissionResource::collection(

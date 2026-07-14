@@ -47,7 +47,7 @@ class ProviderProfileController extends Controller
     {
         return ApiResponse::resource(
             new ProviderResource(
-                (new ActorProfile($request->user()))->provider()->load('serviceCategories'),
+                (new ActorProfile($request->user()))->provider()->load(['serviceCategories', 'securityAccount.user']),
             ),
         );
     }

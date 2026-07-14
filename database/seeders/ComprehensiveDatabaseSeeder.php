@@ -323,7 +323,7 @@ class ComprehensiveDatabaseSeeder extends Seeder
         foreach ($pubData as $d) {
             $publishedMissions[] = $createMission(
                 $d[0], null, $d[1], $d[2], $d[3],
-                LifecycleStatus::Published, $d[4], ExecutionMode::Classic, $d[5]
+                LifecycleStatus::Published, $d[5], ExecutionMode::Classic, $d[4]
             );
         }
 

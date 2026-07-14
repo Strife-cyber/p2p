@@ -16,10 +16,8 @@ Route::prefix('auth')->group(function (): void {
 
 Route::post('/webhooks/payments/{gateway}', PaymentWebhookController::class);
 
-// Published missions are publicly viewable; assigned ones require auth (enforced by MissionPolicy)
-Route::get('/missions/{mission}', [MissionController::class, 'show']);
-
 Route::middleware('auth:sanctum')->group(function (): void {
+    Route::get('/missions/{mission}', [MissionController::class, 'show']);
     Route::get('/user', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 

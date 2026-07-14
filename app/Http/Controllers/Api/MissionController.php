@@ -24,7 +24,6 @@ use App\Support\ActorProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\Auth;
 
 class MissionController extends Controller
 {
@@ -121,16 +120,6 @@ class MissionController extends Controller
 
     public function show(Request $request, Mission $mission): JsonResponse
     {
-        // Optional authentication: resolve user from Bearer token if present
-        // without requiring it — published missions are public, assigned ones
-        // need auth (enforced by MissionPolicy::view())
-        if ($request->bearerToken() && $request->user() === null) {
-            $user = Auth::guard('sanctum')->user();
-            if ($user) {
-                Auth::setUser($user);
-            }
-        }
-
         $this->authorize('view', $mission);
 
         return ApiResponse::resource(

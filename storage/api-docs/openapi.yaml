@@ -447,6 +447,8 @@ paths:
         Once assigned, only the mission client and the assigned provider can view it.
         `pairing_code` is returned only to the mission client.
       operationId: missionsShow
+      security:
+        - sanctum: []
       parameters:
         - $ref: '#/components/parameters/MissionId'
       responses:

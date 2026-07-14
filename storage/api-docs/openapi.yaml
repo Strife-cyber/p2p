@@ -28,7 +28,7 @@ tags:
   - name: Client
     description: Client onboarding profile
   - name: Provider
-    description: Provider onboarding profile
+    description: Provider onboarding profile and directory
   - name: Catalog
     description: Service categories
   - name: Wallet
@@ -256,6 +256,32 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
+  /api/providers/available:
+    get:
+      tags: [Provider]
+      summary: List available providers
+      description: |
+        Returns all providers with `activity_status = available`, including their name,
+        badge, SRT score, and service categories.
+        Useful for clients browsing the provider directory.
+      operationId: providersAvailable
+      security:
+        - sanctum: []
+      responses:
+        '200':
+          description: Available provider list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Provider'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
   /api/wallet:
     get:
       tags: [Wallet]
@@ -304,18 +330,22 @@ paths:
   /api/missions:
     get:
       tags: [Missions]
-      summary: List missions for the current actor
+      summary: List published missions (marketplace)
       description: |
-        Clients see their missions. Providers see assigned missions plus published missions open for applications.
+        Returns only published (unassigned) missions — the public marketplace view.
+        For role-specific mission lists, use dedicated endpoints.
+        Optionally filter by service category.
       operationId: missionsIndex
       security:
         - sanctum: []
       parameters:
-        - name: lifecycle_status
+        - name: service_category_id
           in: query
           required: false
+          description: Filter by service category UUID
           schema:
-            $ref: '#/components/schemas/LifecycleStatus'
+            type: string
+            format: uuid
       responses:
         '200':
           description: Paginated mission list
@@ -358,10 +388,11 @@ paths:
     get:
       tags: [Missions]
       summary: Get mission details
-      description: pairing_code is returned only to the mission client.
+      description: |
+        **Access policy:** Published missions are publicly viewable by anyone.
+        Once assigned, only the mission client and the assigned provider can view it.
+        `pairing_code` is returned only to the mission client.
       operationId: missionsShow
-      security:
-        - sanctum: []
       parameters:
         - $ref: '#/components/parameters/MissionId'
       responses:
@@ -828,6 +859,10 @@ components:
         id:
           type: string
           format: uuid
+        name:
+          type: string
+          description: The provider's display name (from linked User account)
+          nullable: true
         current_badge:
           type: string
           example: grey
